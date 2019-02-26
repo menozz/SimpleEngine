@@ -1,4 +1,4 @@
-#include "../include/olcConsoleGameEngine.h"
+#include "olcConsoleGameEngine.h"
 
 #define PI 3.14159
 
@@ -16,7 +16,7 @@ struct mesh {
 	vector<triangle> tris;
 };
 
-struct math4x4 {
+struct mat4x4 {
 	float m[4][4] = { 0 };
 };
 
@@ -30,7 +30,8 @@ public:
 
 private:
 	mesh meshCube;
-	math4x4 mathProj;
+	mat4x4 mathProj;
+	float fTheta = 0.0f;
 
 	void initMeshCube() {
 		meshCube.tris = {
@@ -58,6 +59,27 @@ private:
 			// BOTTOM
 			{1.0f, 0.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, 0.0f},
 			{1.0f, 0.0f, 1.0f,   0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 0.0f},
+		};
+	}
+
+	void initMeshPyr() {
+		meshCube.tris = {
+
+			// SOUTH
+			{0.0f, 0.0f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 0.0f},
+
+			// EAST
+			{1.0f, 0.0f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 1.0f},
+			
+			// NORTH
+			{0.0f, 0.0f, 1.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 1.0f},
+			
+			// WEST
+			{0.0f, 0.0f, 1.0f,   0.5f, 0.5f, 0.5f,   0.0f, 0.0f, 0.0f},
+			
+			// BOTTOM
+			{0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f},
+			{0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f},
 		};
 	}
 
@@ -91,41 +113,46 @@ private:
 		triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 	}
 
-public:
-	bool OnUserCreate() override
+	void Draw(float &fElapsedTime)
 	{
-		initMeshCube();
-		initMatrixProjection();
+		mat4x4 matRotZ, matRotX;
+		fTheta += 1.0f * fElapsedTime;
 
-		return true;
+		// Rotation Z
+		matRotZ.m[0][0] = cosf(fTheta);
+		matRotZ.m[0][1] = sinf(fTheta);
+		matRotZ.m[1][0] = -sinf(fTheta);
+		matRotZ.m[1][1] = cosf(fTheta);
+		matRotZ.m[2][2] = 1;
+		matRotZ.m[3][3] = 1;
+
+		// Rotation X
+		const auto fTh = fTheta * 0.5f;
+		matRotX.m[0][0] = 1;
+		matRotX.m[1][1] = cosf(fTh);
+		matRotX.m[1][2] = sinf(fTh);
+		matRotX.m[2][1] = -sinf(fTh);
+		matRotX.m[2][2] = cosf(fTh);
+		matRotX.m[3][3] = 1;
 
 
-	}
-
-	static void multiply_matrix_vector(vec3d &i, vec3d &o, math4x4 &m) {
-		o.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z* m.m[2][0] + m.m[3][0];
-		o.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z* m.m[2][1] + m.m[3][1];
-		o.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z* m.m[2][2] + m.m[3][2];
-		const auto w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z* m.m[2][3] + m.m[3][3];
-
-		if (w != 0)
+		for (auto tri : meshCube.tris)
 		{
-			o.x /= w, o.y /= w, o.z /= w;
-		}
-	}
+			triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
 
-	bool OnUserUpdate(float fElapsedTime) override
-	{
-		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
-		for (auto tri : meshCube.tris) 
-		{
-			triangle triProjected, triTranslated;
+			multiply_matrix_vector(tri.p[0], triRotatedZ.p[0], matRotZ);
+			multiply_matrix_vector(tri.p[1], triRotatedZ.p[1], matRotZ);
+			multiply_matrix_vector(tri.p[2], triRotatedZ.p[2], matRotZ);
 
-			triTranslated = tri;
-			triTranslated.p[0].z = tri.p[0].z + 3.0f;
-			triTranslated.p[1].z = tri.p[1].z + 3.0f;
-			triTranslated.p[2].z = tri.p[2].z + 3.0f;
-		
+			multiply_matrix_vector(triRotatedZ.p[0], triRotatedZX.p[0], matRotX);
+			multiply_matrix_vector(triRotatedZ.p[1], triRotatedZX.p[1], matRotX);
+			multiply_matrix_vector(triRotatedZ.p[2], triRotatedZX.p[2], matRotX);
+
+			triTranslated = triRotatedZX;
+			triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
+			triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
+			triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+
 			multiply_matrix_vector(triTranslated.p[0], triProjected.p[0], mathProj);
 			multiply_matrix_vector(triTranslated.p[1], triProjected.p[1], mathProj);
 			multiply_matrix_vector(triTranslated.p[2], triProjected.p[2], mathProj);
@@ -139,16 +166,42 @@ public:
 				triProjected.p[2].x, triProjected.p[2].y,
 				PIXEL_SOLID, FG_WHITE);
 		}
+	}
+
+	static void multiply_matrix_vector(vec3d &i, vec3d &o, mat4x4 &m) {
+		o.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z* m.m[2][0] + m.m[3][0];
+		o.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z* m.m[2][1] + m.m[3][1];
+		o.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z* m.m[2][2] + m.m[3][2];
+		const auto w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z* m.m[2][3] + m.m[3][3];
+
+		if (w != 0)
+		{
+			o.x /= w, o.y /= w, o.z /= w;
+		}
+	}
+
+public:
+	bool OnUserCreate() override
+	{
+		initMeshPyr();
+		initMatrixProjection();
+
 		return true;
 	}
-	
+
+	bool OnUserUpdate(float fElapsedTime) override
+	{
+		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
+		Draw(fElapsedTime);
+		return true;
+	}
 };
 
 
 int main()
 {
 	olcEngine3D demo;
-	if (demo.ConstructConsole(256, 240, 4, 4))
+	if (demo.ConstructConsole(400, 172, 4, 4))
 		demo.Start();
 
 	return 0;
