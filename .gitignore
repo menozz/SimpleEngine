@@ -1,14 +1,2 @@
-/SimpleEngine/Debug/SimpleEngine.tlog/*.tlog
-/SimpleEngine/.vs/SimpleEngine/v15/ipch/*.ipch
-/SimpleEngine/.vs/SimpleEngine/v15/*.suo
-/SimpleEngine/.vs/SimpleEngine/v15/*.db
-/SimpleEngine/.vs/SimpleEngine/v15/*.opendb
-/SimpleEngine/.vs/SimpleEngine/v15/ipch/AutoPCH/d4c5cfa8f3e6ff64/*.ipch
-/SimpleEngine/Debug/*.exe
-/SimpleEngine/Debug/*.ilk
-/SimpleEngine/Debug/*.log
-/SimpleEngine/Debug/*.obj
-/SimpleEngine/Debug/*.pdb
-/SimpleEngine/Debug/SimpleEngine.tlog/*.lastbuildstate
-/SimpleEngine/Debug/*.idb
-/SimpleEngine/*.user
+/Debug/*
+/.vs/*

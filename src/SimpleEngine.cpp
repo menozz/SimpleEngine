@@ -1,4 +1,4 @@
-#include "olcConsoleGameEngine.h"
+#include "../include/olcConsoleGameEngine.h"
 
 #define PI 3.14159
 
