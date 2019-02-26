@@ -101,11 +101,12 @@ public:
 
 
 	}
-	void MultiplyMatrixVector(vec3d &i, vec3d &o, math4x4 &m) {
+
+	static void multiply_matrix_vector(vec3d &i, vec3d &o, math4x4 &m) {
 		o.x = i.x * m.m[0][0] + i.y * m.m[1][0] + i.z* m.m[2][0] + m.m[3][0];
 		o.y = i.x * m.m[0][1] + i.y * m.m[1][1] + i.z* m.m[2][1] + m.m[3][1];
 		o.z = i.x * m.m[0][2] + i.y * m.m[1][2] + i.z* m.m[2][2] + m.m[3][2];
-		float w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z* m.m[2][3] + m.m[3][3];
+		const auto w = i.x * m.m[0][3] + i.y * m.m[1][3] + i.z* m.m[2][3] + m.m[3][3];
 
 		if (w != 0)
 		{
@@ -125,9 +126,9 @@ public:
 			triTranslated.p[1].z = tri.p[1].z + 3.0f;
 			triTranslated.p[2].z = tri.p[2].z + 3.0f;
 		
-			MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], mathProj);
-			MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], mathProj);
-			MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], mathProj);
+			multiply_matrix_vector(triTranslated.p[0], triProjected.p[0], mathProj);
+			multiply_matrix_vector(triTranslated.p[1], triProjected.p[1], mathProj);
+			multiply_matrix_vector(triTranslated.p[2], triProjected.p[2], mathProj);
 
 			// Scale into view
 			ScaleIntoView(triProjected);
