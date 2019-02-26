@@ -1,4 +1,8 @@
 #include "olcConsoleGameEngine.h"
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #define PI 3.14159
 
@@ -6,6 +10,10 @@ using namespace std;
 
 struct vec3d {
 	float x, y, z;
+};
+
+struct vertex {
+	int v1, v2, v3;
 };
 
 struct triangle {
@@ -26,6 +34,11 @@ public:
 	olcEngine3D()
 	{
 		m_sAppName = L"Example";
+	}
+
+	void InitMesh(mesh meshData)
+	{
+		meshCube = meshData;
 	}
 
 private:
@@ -62,26 +75,7 @@ private:
 		};
 	}
 
-	void initMeshPyr() {
-		meshCube.tris = {
 
-			// SOUTH
-			{0.0f, 0.0f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 0.0f},
-
-			// EAST
-			{1.0f, 0.0f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 1.0f},
-			
-			// NORTH
-			{0.0f, 0.0f, 1.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 1.0f},
-			
-			// WEST
-			{0.0f, 0.0f, 1.0f,   0.5f, 0.5f, 0.5f,   0.0f, 0.0f, 0.0f},
-			
-			// BOTTOM
-			{0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f},
-			{0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f},
-		};
-	}
 
 	void initMatrixProjection()
 	{
@@ -181,9 +175,11 @@ private:
 	}
 
 public:
+
+
 	bool OnUserCreate() override
 	{
-		initMeshPyr();
+		//	initMeshPyr();
 		initMatrixProjection();
 
 		return true;
@@ -197,12 +193,98 @@ public:
 	}
 };
 
+mesh CreateMeshPyr() {
+
+	mesh mesh_data;
+	mesh_data.tris =
+	{
+
+		// SOUTH
+		{0.0f, 0.0f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 0.0f},
+
+		// EAST
+		{1.0f, 0.0f, 0.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 1.0f},
+
+		// NORTH
+		{0.0f, 0.0f, 1.0f,   0.5f, 0.5f, 0.5f,   1.0f, 0.0f, 1.0f},
+
+		// WEST
+		{0.0f, 0.0f, 1.0f,   0.5f, 0.5f, 0.5f,   0.0f, 0.0f, 0.0f},
+
+		// BOTTOM
+		{0.0f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f},
+		{0.0f, 0.0f, 0.0f,   1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f},
+	};
+
+	return mesh_data;
+}
+string ExePath();
+mesh ReadFromFile()
+{
+	ifstream source;
+
+	vector<vertex> vertices;
+	vector<vec3d> coords;
+	const string path = ExePath();
+	//var file = sprintf(path, "%s ");
+	source.open(path + "\\cyl.obj", ios_base::in);
+	for (string line; getline(source, line); )
+	{
+		istringstream in(line);
+
+		string type;
+		in >> type;
+
+		if (type == "v")
+		{
+			vec3d vec{};
+			in >> vec.x >> vec.y >> vec.z;
+			coords.push_back(vec);
+		}
+
+		else if (type == "f") {
+			vertex vex{};
+			in >> vex.v1 >> vex.v2 >> vex.v3;
+			vertices.push_back(vex);
+		}
+	}
+
+	source.close();
+	mesh m{};
+
+	for (auto item : vertices)
+	{
+		triangle tri{};
+		tri.p[0] = coords[item.v1 - 1];
+		tri.p[1] = coords[item.v2 - 1];
+		tri.p[2] = coords[item.v3 - 1];
+		m.tris.push_back(tri);
+	}
+
+	return m;
+}
+
+string ExePath() {
+	TCHAR buffer[MAX_PATH];
+	GetModuleFileName(NULL, buffer, MAX_PATH);
+	wstring wStr = buffer;
+	string s = std::string(wStr.begin(), wStr.end());
+	string::size_type pos = string(s).find_last_of("\\/");
+	return string(s).substr(0, pos);
+}
 
 int main()
 {
+	cout << "my directory is " << ExePath() << "\n";
+	const auto m = ReadFromFile();
 	olcEngine3D demo;
+
 	if (demo.ConstructConsole(400, 172, 4, 4))
+	{
+		demo.InitMesh(m);
 		demo.Start();
+	}
 
 	return 0;
 }
+
